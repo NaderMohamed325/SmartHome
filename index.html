@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>ESP32</title>
     <style>
@@ -14,7 +13,6 @@
             margin: 0;
             padding: 20px;
         }
-
         .container {
             display: flex;
             align-items: center;
@@ -129,12 +127,10 @@
     </label>
     <button id="sendButton" class="send-button">Send Message</button>
 </div>
-
 <div class="authors">
     <h2>Authors:</h2>
     <p class="author-names">Nader || Bassem || Mahmoud</p>
 </div>
-
 <script>
     document.getElementById('sendButton').addEventListener('click', function() {
         const message = document.getElementById('guestMessage').value;
@@ -160,6 +156,7 @@
             });
     }
     setInterval(updateAnalogSensorReading, 1000); // Update every second
+
     function updateMpu() {
         fetch('/Earthquake')
             .then(response => response.json())
@@ -186,8 +183,6 @@
             });
     }
     setInterval(updateGuestDetection, 1000); // Update every second
-
-
 </script>
 </body>
 </html>

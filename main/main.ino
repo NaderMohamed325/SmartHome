@@ -7,8 +7,10 @@ const char* password = "Nader2233";
 
 WebServer server(80);
 
+const int analogPin = 36; // D15 pin for analog reading
+
 // HTML content
-const char* htmlContent = R"rawliteral(
+String htmlContent = R"rawliteral(
 <!doctype html>
 <html lang="en">
 <head>
@@ -55,7 +57,7 @@ const char* htmlContent = R"rawliteral(
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
-        .flame-sensor {
+        .analog-sensor {
             color: #ed6464;
             background: rgba(237, 100, 100, 0.2);
             border-color: #ed6464;
@@ -86,37 +88,103 @@ const char* htmlContent = R"rawliteral(
         .input-sensor::placeholder {
             color: #b0c4de;
         }
+        .send-button {
+            background-color: cornflowerblue;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .send-button:hover {
+            background-color: deepskyblue;
+        }
         #Device {
             font-size: medium;
             border: 3px solid transparent;
             border-radius: 50px;
             background: linear-gradient(aliceblue, aliceblue) padding-box,
-                        linear-gradient(to right, cornflowerblue, deepskyblue) border-box;
+            linear-gradient(to right, cornflowerblue, deepskyblue) border-box;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             padding: 10px 20px;
+        }
+        .authors {
+            margin-top: 20px;
+            text-align: center;
+            color: #b0c4de;
+        }
+        .author-names {
+            font-size: larger;
+            color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-block;
+        }
+        .author-names:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="title">Smart Home Monitor</h1>
-        <h1 class="title" id="Device">Device: ESP32</h1>
-    </div>
-    <hr>
-    <div class="Sensors">
-        <h1 class="sensor-item flame-sensor">Flame Sensor Signal = FlameRead 🔥</h1>
-        <h1 class="sensor-item gas-sensor">Gas Sensor Signal = Warning Message</h1>
-        <h1 class="sensor-item earthquake-sensor">Earthquake = MpuMessage</h1>
-        <h1 class="sensor-item door-sensor">Guest On The Door = UltraSonic</h1>
-        <input class="sensor-item input-sensor" type="text" placeholder="Type a Message to the Guest">
-    </div>
+<div class="container">
+    <h1 class="title">Smart Home Monitor</h1>
+    <h1 class="title" id="Device">Device: ESP32</h1>
+</div>
+<div class="Sensors">
+    <h1 class="sensor-item analog-sensor" id="analogSensorReading">Analog Sensor Signal = Waiting...</h1>
+    <h1 class="sensor-item gas-sensor">Gas Sensor Signal = Warning Message</h1>
+    <h1 class="sensor-item earthquake-sensor">Earthquake = MpuMessage</h1>
+    <h1 class="sensor-item door-sensor">Guest On The Door = UltraSonic</h1>
+    <label>
+        <input id="guestMessage" class="sensor-item input-sensor" type="text" placeholder="Type a Message to the Guest">
+    </label>
+    <button id="sendButton" class="send-button">Send Message</button>
+</div>
+
+<div class="authors">
+    <h2>Authors:</h2>
+    <p class="author-names">Nader || Bassem || Mahmoud</p>
+</div>
+
+<script>
+    document.getElementById('sendButton').addEventListener('click', function() {
+        const message = document.getElementById('guestMessage').value;
+        fetch('/sendMessage', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        }).then(response => {
+            if (response.ok) {
+                console.log('Message sent to LCD');
+                document.getElementById('guestMessage').value = ''; // Clear the input
+            }
+        });
+    });
+
+    function updateAnalogSensorReading() {
+        fetch('/analogSensor')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('analogSensorReading').innerText = 'Analog Sensor Signal = ' + data.value;
+            });
+    }
+
+    setInterval(updateAnalogSensorReading, 1000); // Update every second
+</script>
 </body>
 </html>
 )rawliteral";
 
+int readAnalogSensor() {
+    return analogRead(analogPin);
+}
+
 void setup() {
     Serial.begin(115200);
-    
+    pinMode(36,  INPUT);
     // Connect to Wi-Fi
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
@@ -131,10 +199,24 @@ void setup() {
         server.send(200, "text/html", htmlContent);
     });
 
+    // Endpoint to get the analog sensor reading
+    server.on("/analogSensor", HTTP_GET, []() {
+        int analogValue = readAnalogSensor();
+        String json = "{\"value\": " + String(analogValue) + "}";
+        server.send(200, "application/json", json);
+    });
+
     // Start the server
     server.begin();
 }
 
 void loop() {
     server.handleClient(); // Handle incoming clients
+    
+    // Read and print analog value to Serial Monitor
+    int analogValue = readAnalogSensor();
+    Serial.print("Analog Sensor Value: ");
+    Serial.println(analogValue);
+    
+    delay(1000); // Delay for 1 second between readings
 }

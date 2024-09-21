@@ -8,12 +8,13 @@
     <title>ESP32</title>
     <style>
         body {
-            background-color: #1e1e1e;
+            background: linear-gradient(to right, #1e1e1e, #1d3644, #043854);
             font-family: "JetBrains Mono", monospace;
             color: white;
             margin: 0;
             padding: 20px;
         }
+
         .container {
             display: flex;
             align-items: center;
@@ -44,7 +45,7 @@
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
-        .flame-sensor {
+        .analog-sensor {
             color: #ed6464;
             background: rgba(237, 100, 100, 0.2);
             border-color: #ed6464;
@@ -101,6 +102,16 @@
             text-align: center;
             color: #b0c4de;
         }
+        .author-names {
+            font-size: larger;
+            color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-block;
+        }
+        .author-names:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -109,7 +120,7 @@
     <h1 class="title" id="Device">Device: ESP32</h1>
 </div>
 <div class="Sensors">
-    <h1 class="sensor-item flame-sensor">Flame Sensor Signal = FlameRead 🔥</h1>
+    <h1 class="sensor-item analog-sensor" id="analogSensorReading">Analog Sensor Signal = Waiting...</h1>
     <h1 class="sensor-item gas-sensor">Gas Sensor Signal = Warning Message</h1>
     <h1 class="sensor-item earthquake-sensor">Earthquake = MpuMessage</h1>
     <h1 class="sensor-item door-sensor">Guest On The Door = UltraSonic</h1>
@@ -123,24 +134,6 @@
     <h2>Authors:</h2>
     <p class="author-names">Nader || Bassem || Mahmoud</p>
 </div>
-
-<style>
-    .authors {
-        margin-top: 20px;
-        text-align: center;
-        color: #b0c4de;
-    }
-    .author-names {
-        font-size: larger;
-        color: white;
-        transition: transform 0.2s, box-shadow 0.2s;
-        display: inline-block; /* Allows hover effect to work */
-    }
-    .author-names:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-</style>
 
 <script>
     document.getElementById('sendButton').addEventListener('click', function() {
@@ -158,7 +151,43 @@
             }
         });
     });
+
+    function updateAnalogSensorReading() {
+        fetch('/analogSensor')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('analogSensorReading').innerText = 'Analog Sensor Signal = ' + data.value;
+            });
+    }
+    setInterval(updateAnalogSensorReading, 1000); // Update every second
+    function updateMpu() {
+        fetch('/Earthquake')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('earthquake-sensor').innerText = 'Earthquakes Alarm = ' + data.value;
+            });
+    }
+    setInterval(updateMpu, 2000); // Update every two second
+
+    function updateGasDetector() {
+        fetch('/GasDetector')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('gas-sensor').innerText = 'Gas Detector Status = ' + data.value;
+            });
+    }
+    setInterval(updateGasDetector, 1000); // Update every second
+
+    function updateGuestDetection() {
+        fetch('/GuestDetector')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('door-sensor').innerText = 'Is there Someone on the Door = ' + data.value;
+            });
+    }
+    setInterval(updateGuestDetection, 1000); // Update every second
+
+
 </script>
 </body>
 </html>
-
